@@ -10,9 +10,8 @@ server:
 database:
   type: mysql
   host: localhost
-  user: root
+  user: finance_user
   password: "1234"
   database: finance_project
-  path: data/app.db
   table: finances
              

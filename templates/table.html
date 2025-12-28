@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Stock Holdings</title>
+
+  <style>
+    :root{
+      --bg:#0b1020;
+      --card:rgba(255,255,255,0.06);
+      --border:rgba(255,255,255,0.10);
+      --text:#e9ecf5;
+      --muted:#aab2cc;
+      --accent:#7c5cff;
+    }
+    *{ box-sizing:border-box; }
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
+      background: radial-gradient(1200px 800px at 10% 10%, #1b2a6a 0%, transparent 55%),
+                  radial-gradient(1000px 700px at 90% 0%, #3b1b6a 0%, transparent 55%),
+                  var(--bg);
+      color:var(--text);
+      min-height:100vh;
+    }
+    .container{
+      max-width:1200px;
+      margin:0 auto;
+      padding:24px;
+    }
+    .top{
+      display:flex;
+      align-items:flex-end;
+      justify-content:space-between;
+      gap:14px;
+      flex-wrap:wrap;
+      margin-bottom:14px;
+    }
+    h1{ margin:0; font-size:26px; }
+    .sub{ margin:6px 0 0; color:var(--muted); }
+
+    .search{
+      display:flex;
+      gap:10px;
+      align-items:center;
+      background: rgba(255,255,255,0.06);
+      border:1px solid var(--border);
+      padding:10px;
+      border-radius:14px;
+    }
+    .search input{
+      width:260px;
+      padding:10px 12px;
+      border-radius:10px;
+      border:1px solid var(--border);
+      background: rgba(0,0,0,0.25);
+      color:var(--text);
+      outline:none;
+    }
+    .btn{
+      padding:10px 14px;
+      border-radius:10px;
+      border:1px solid var(--border);
+      background: rgba(255,255,255,0.08);
+      color:var(--text);
+      cursor:pointer;
+      text-decoration:none;
+      display:inline-flex;
+      align-items:center;
+      font-weight:700;
+      font-size:14px;
+    }
+    .btn-primary{
+      background: linear-gradient(135deg, var(--accent), #4dd2ff);
+      border:none;
+      color:#081027;
+    }
+
+    .card{
+      background: var(--card);
+      border:1px solid var(--border);
+      border-radius:18px;
+      overflow:hidden;
+      box-shadow: 0 16px 40px rgba(0,0,0,0.25);
+      padding:16px;
+    }
+    .table-wrap{ overflow:auto; }
+    table{
+      width:100%;
+      border-collapse:collapse;
+      min-width:1000px;
+    }
+    thead th{
+      position:sticky;
+      top:0;
+      background: rgba(10,16,32,0.88);
+      backdrop-filter: blur(8px);
+      border-bottom:1px solid var(--border);
+      color:var(--muted);
+      font-size:12px;
+      text-transform:uppercase;
+      letter-spacing:0.08em;
+      padding:14px 12px;
+      text-align:left;
+      white-space:nowrap;
+    }
+    tbody td{
+      padding:12px;
+      border-bottom:1px solid rgba(255,255,255,0.06);
+      font-size:14px;
+      white-space:nowrap;
+    }
+    tbody tr:hover{ background: rgba(255,255,255,0.05); }
+    .num{ text-align:right; font-variant-numeric: tabular-nums; }
+    .muted{ color:var(--muted); }
+
+    .footer{
+      margin-top:12px;
+      display:flex;
+      justify-content:space-between;
+      flex-wrap:wrap;
+      gap:10px;
+      color:var(--muted);
+      font-size:12px;
+    }
+
+    .left-panel{
+      flex: 1;
+      min-width: 520px;
+    }
+
+    .right-panel{
+      width: 320px;
+      flex: 0 0 320px;
+    }
+
+    @media (max-width: 900px){
+      .top{ flex-wrap:wrap; }
+      .left-panel,
+      .right-panel{
+        width:100%;
+        flex: 1 1 auto;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  {% set tags = request.args.get('tags', '') %}
+  <div class="container">
+
+    <div class="top">
+
+      <!-- LEFT: Title + Search -->
+      <div class="left-panel">
+        <div>
+          <h1>Stock Holdings</h1>
+          <div class="sub">All holdings load by default. Use search to filter.</div>
+        </div>
+
+        <form class="search" method="get" action="{{ url_for('search') }}" style="margin-top:12px;">
+          <input
+            type="text"
+            name="tags"
+            placeholder="Search stock name (e.g. HDFC)"
+            value="{{ tags }}"
+          >
+          <button class="btn btn-primary" type="submit">Search</button>
+          <a class="btn" href="{{ url_for('holdings') }}">Reset</a>
+          <a class="btn" href="{{ url_for('index') }}">Back</a>
+        </form>
+      </div>
+
+      <!-- RIGHT: Upload File Path -->
+      <div class="card right-panel">
+        <h3 style="margin:0 0 10px;">Upload Excel File</h3>
+
+        <form method="post" action="/urllink">
+          <input
+            type="text"
+            name="datas"
+            placeholder="Enter local file path (e.g. C:\data\stocks.xlsx)"
+            style="
+              width:100%;
+              padding:10px 12px;
+              border-radius:10px;
+              border:1px solid var(--border);
+              background: rgba(0,0,0,0.25);
+              color:var(--text);
+              outline:none;
+              margin-bottom:10px;
+            "
+          >
+          <button type="submit" class="btn btn-primary" style="width:100%;">
+            Upload File Path
+          </button>
+        </form>
+      </div>
+
+    </div>
+
+    <div class="card" style="padding:0;">
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Stock</th>
+              <th>ISIN</th>
+              <th>Sector</th>
+              <th class="num">Qty</th>
+              <th class="num">Avg Cost</th>
+              <th class="num">Value at Cost</th>
+              <th class="num">Unrealised P/L</th>
+              <th class="num">Realised P/L</th>
+              <th class="num">LT Qty</th>
+              <th>Owner</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            {% if rows %}
+              {% for row in rows %}
+                <tr>
+                  <td>{{ row.stock_name }}</td>
+                  <td class="muted">{{ row.ISIN }}</td>
+                  <td class="muted">{{ row.sector_name }}</td>
+                  <td class="num">{{ row.quantity }}</td>
+                  <td class="num">{{ row.Average_cost_price }}</td>
+                  <td class="num">{{ row.value_at_cost }}</td>
+                  <td class="num">{{ row.unrealised_profit_loss }}</td>
+                  <td class="num">{{ row.realised_profit_loss }}</td>
+                  <td class="num">{{ row.nearing_long_term_quantity }}</td>
+                  <td class="muted">{{ row.owner_name }}</td>
+                </tr>
+              {% endfor %}
+            {% else %}
+              <tr>
+                <td colspan="10" class="muted">No data found</td>
+              </tr>
+            {% endif %}
+          </tbody>
+
+        </table>
+      </div>
+    </div>
+
+    <div class="footer">
+      <div>Showing {{ rows|length }} row(s)</div>
+      <div>
+        {{ url_for('holdings') }}{% if tags %}?tags={{ tags }}{% endif %}
+      </div>
+    </div>
+
+  </div>
+</body>
+</html>

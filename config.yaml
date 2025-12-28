@@ -1,0 +1,18 @@
+app:
+  name: Finanace
+  debug: true
+  upload_folder:  "C:/python_practice/FINANCE-PROJECT"
+
+server:
+  host: 0.0.0.0
+  port: 5000
+
+database:
+  type: mysql
+  host: localhost
+  user: root
+  password: "1234"
+  database: finance_project
+  path: data/app.db
+  table: finances
+             

@@ -128,17 +128,34 @@ class FinanceService:
         finally:
             conn.close()
 
-    def get_owner_based_values(self,data):
+    def get_owner_based_values(self,datas):
         conn = self._connect()
         try:
             cursor = conn.cursor()
-            sql = f"""SELECT COUNT(*) FROM FINANCES WHERE OWNER_NAME = %s"""
-            cursor.execute(sql,data)
+            sql = f"""SELECT sector_name FROM FINANCES WHERE OWNER_NAME = %s"""
+            cursor.execute(sql,(datas,))
             rows = cursor.fetchall()
             return rows
         finally:
             conn.close()
-
+    
+    def get_owners(self,datas):
+        conn = self._connect()
+        try:
+            cursor = conn.cursor(dictionary = True)
+            columns = ["stock_name","ISIN",'sector_name','quantity','Average_cost_price','value_at_cost','current_market','crt_mkt_price_change','valuation',
+                'unrealised_profit_loss',
+                'realised_profit_loss',
+                'nearing_long_term_quantity',
+                "owner_name","unique_code"]
+            insert_columns = ",".join(columns)
+            sql = f"""select {insert_columns} from {self.table} where owner_name = %s
+            """
+            cursor.execute(sql,(datas,))
+            rows = cursor.fetchall()
+            return rows
+        finally:
+            conn.close()
 
 
 

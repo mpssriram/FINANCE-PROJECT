@@ -41,7 +41,20 @@ class XlsReader:
         "owner_name",
         "unique_key"]
         return xls_df
-        
+    
+    def build_Series(self,input_text):
+        a = []
+        for i in range(len(input_text)):
+            a.append(input_text[i][0])
+        run = pd.Series(a)
+        count_input = run.value_counts()
+        change_to_list = count_input.to_list()
+        sum_list = sum(change_to_list[3:])
+        update_list = change_to_list[0:3] + [sum_list]
+        names = count_input.index.to_list()
+        update_values = names[0:3] + ['others']
+        return update_list,update_values
+    
 if __name__ == "__main__":
     cfg = Config()
     xls = XlsReader(cfg)

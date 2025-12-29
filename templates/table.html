@@ -48,6 +48,7 @@
       border:1px solid var(--border);
       padding:10px;
       border-radius:14px;
+      flex-wrap:wrap;
     }
     .search input{
       width:260px;
@@ -142,6 +143,7 @@
         width:100%;
         flex: 1 1 auto;
       }
+      .search input{ width:100%; }
     }
   </style>
 </head>
@@ -152,13 +154,14 @@
 
     <div class="top">
 
-      <!-- LEFT: Title + Search -->
+      <!-- LEFT: Title + Search + Owner Filter -->
       <div class="left-panel">
         <div>
           <h1>Stock Holdings</h1>
           <div class="sub">All holdings load by default. Use search to filter.</div>
         </div>
 
+        <!-- Search bar -->
         <form class="search" method="get" action="{{ url_for('search') }}" style="margin-top:12px;">
           <input
             type="text"
@@ -169,6 +172,18 @@
           <button class="btn btn-primary" type="submit">Search</button>
           <a class="btn" href="{{ url_for('holdings') }}">Reset</a>
           <a class="btn" href="{{ url_for('index') }}">Back</a>
+        </form>
+
+        <!-- Owner filter (chart shows only when owner is selected) -->
+        <form class="search" method="get" action="{{ url_for('holdings') }}" style="margin-top:12px;">
+          <input
+            type="text"
+            name="owner"
+            placeholder="Enter owner name (e.g. Phani)"
+            value="{{ selected_owner or '' }}"
+          >
+          <button class="btn btn-primary" type="submit">Show Owner</button>
+          <a class="btn" href="{{ url_for('holdings') }}">Clear Owner</a>
         </form>
       </div>
 
@@ -197,6 +212,14 @@
           </button>
         </form>
       </div>
+
+      <!-- RIGHT: Interactive Chart.js graph (shows ONLY when owner is selected and chart data exists) -->
+      {% if selected_owner and chart_values and chart_labels %}
+        <div class="card right-panel" style="margin-top:12px;">
+          <h3 style="margin:0 0 10px;">Owner Graph</h3>
+          <canvas id="sectorChart" height="280"></canvas>
+        </div>
+      {% endif %}
 
     </div>
 
@@ -253,5 +276,64 @@
     </div>
 
   </div>
+
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  {% if selected_owner and chart_values and chart_labels %}
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+      const labels = {{ chart_labels | tojson }};
+      const values = {{ chart_values | tojson }};
+
+      const canvas = document.getElementById("sectorChart");
+      if (!canvas) return;
+
+      const ctx = canvas.getContext("2d");
+
+      new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+          labels: labels,
+          datasets: [{
+            data: values,
+            backgroundColor: [
+              '#7c5cff',
+              '#4dd2ff',
+              '#2ecc71',
+              '#e74c3c',
+              '#f1c40f'
+            ],
+            borderWidth: 0
+          }]
+        },
+        options: {
+          responsive: true,
+          cutout: '60%',
+          plugins: {
+            legend: {
+              position: 'bottom',
+              labels: {
+                color: '#e9ecf5',
+                padding: 14
+              }
+            },
+            tooltip: {
+              callbacks: {
+                label: function(context) {
+                  const total = context.dataset.data.reduce((a,b)=>a+b,0);
+                  const v = context.raw;
+                  const pct = total ? ((v / total) * 100).toFixed(1) : 0;
+                  return `${context.label}: ${v} (${pct}%)`;
+                }
+              }
+            }
+          }
+        }
+      });
+    });
+  </script>
+  {% endif %}
+
 </body>
 </html>

@@ -10,7 +10,7 @@ server:
 database:
   type: mysql
   host: localhost
-  user: finance_user
+  user: root
   password: "1234"
   database: finance_project
   table: finances

@@ -4,12 +4,13 @@ from config import Config
 from database import FinanceService
 from xlreader import XlsReader
 import mysql.connector
-
+import Graph as gp
 # --------------------
 # Setup
 # --------------------
 cfg = Config("config.yaml")
 app = Flask(__name__)
+
 
 finance = FinanceService(cfg)
 Xls_Reader = XlsReader(cfg)
@@ -18,10 +19,6 @@ Xls_Reader = XlsReader(cfg)
 def index():
     return render_template("index.html")
 
-@app.route("/holdings", methods=["GET"])
-def holdings():
-    rows = finance.get_all_data()
-    return render_template("table.html",rows = rows)
 #-------- APIs FOR THE PROGRAM --------------
 # 1. --------- FOR SEARCH BAR ----------
 def search_bar(tags):
@@ -65,9 +62,31 @@ def Url_link():
     datas = (request.form.get("datas") or "").strip()
     return URL_Link(datas)
 
+@app.route("/holdings", methods=["GET"])
+def holdings():
+    owner = (request.args.get("owner") or "").strip()
+
+    if owner:
+        rows = finance.get_owners(owner)
+
+        data = finance.get_owner_based_values(owner)
+        values, labels = Xls_Reader.build_Series(data)
+    else:
+        rows = finance.get_all_data()
+        values, labels = None, None
+
+    return render_template(
+        "table.html",
+        rows=rows,
+        selected_owner=owner,
+        chart_values=values,
+        chart_labels=labels
+    )
+
 if __name__ == "__main__":
     # app.run(debug=True)
     app.run(host="0.0.0.0", port=5000, debug=True)
+    
 
     
 

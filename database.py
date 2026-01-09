@@ -100,7 +100,7 @@ class FinanceService:
             return cursor.fetchall()
         finally:
             conn.close()
-
+# -------------- GET ALL DATA ----------
     def get_all_data(self):
         conn = self._connect()
         try:
@@ -127,7 +127,7 @@ class FinanceService:
             return rows
         finally:
             conn.close()
-
+# ------------ FET VALUES BASED ON OWNER ------
     def get_owner_based_values(self,datas):
         conn = self._connect()
         try:
@@ -138,7 +138,7 @@ class FinanceService:
             return rows
         finally:
             conn.close()
-    
+# ----------  SEARCH BASED ON OWNER -------------
     def get_owners(self,datas):
         conn = self._connect()
         try:
@@ -156,8 +156,43 @@ class FinanceService:
             return rows
         finally:
             conn.close()
-
-
+#--------- SEARCH BASED ON SECTOR -------
+    def get_based_on_sector(self,owner,sector):
+        conn = self._connect()
+        try:
+            cursor = conn.cursor(dictionary = True)
+            columns = ["stock_name","ISIN",'sector_name','quantity','Average_cost_price','value_at_cost','current_market','crt_mkt_price_change','valuation',
+                'unrealised_profit_loss',
+                'realised_profit_loss',
+                'nearing_long_term_quantity',
+                "owner_name","unique_code"]
+            insert_columns = ",".join(columns)
+            sql = f"""select {insert_columns} from {self.table} where owner_name = %s and sector_name like %s
+            """
+            cursor.execute(sql,(owner,f"%{sector}%"))
+            rows = cursor.fetchall()
+            return rows
+        finally:
+            conn.close()
+    def get_sector_data(self,owner,sector):
+        conn = self._connect()
+        try:
+            cursor = conn.cursor(dictionary = True)
+            columns = ["stock_name","ISIN",'sector_name','quantity','Average_cost_price','value_at_cost','current_market','crt_mkt_price_change','valuation',
+                'unrealised_profit_loss',
+                'realised_profit_loss',
+                'nearing_long_term_quantity',
+                "owner_name","unique_code"]
+            insert_columns = ",".join(columns)
+            placeholders = ",".join(["%s"] * len(sector))
+            sql = f"""select {insert_columns} from {self.table} where owner_name = %s and sector_name NOT IN ({placeholders})
+            """
+            params = (owner, *sector)
+            cursor.execute(sql,params)
+            rows = cursor.fetchall()
+            return rows
+        finally:
+            conn.close()
 
 if __name__ == "__main__":
     cfg = Config("config.yaml")

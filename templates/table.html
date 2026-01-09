@@ -218,6 +218,16 @@
         <div class="card right-panel" style="margin-top:12px;">
           <h3 style="margin:0 0 10px;">Owner Graph</h3>
           <canvas id="sectorChart" height="280"></canvas>
+
+          <div style="margin-top:12px; display:flex; flex-direction:column; gap:6px;">
+          {% for label in chart_labels %}
+          <a href="/holdings?owner={{ selected_owner }}&sector={{ label }}"
+            style="color:#5cefff; cursor:pointer; font-weight:600; text-decoration:none;">
+            {{ label }}
+          </a>
+          {% endfor %}
+          </div>
+
         </div>
       {% endif %}
 
@@ -269,7 +279,7 @@
     </div>
 
     <div class="footer">
-      <div>Showing {{ rows|length }} row(s)</div>
+    <div>Showing {{ rows|length }} row(s)</div>
       <div>
         {{ url_for('holdings') }}{% if tags %}?tags={{ tags }}{% endif %}
       </div>

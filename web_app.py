@@ -4,7 +4,6 @@ from config import Config
 from database import FinanceService
 from xlreader import XlsReader
 import mysql.connector
-import Graph as gp
 # --------------------
 # Setup
 # --------------------
@@ -51,6 +50,16 @@ def URL_Link(data):
 
     rows = finance.get_all_data()
     return render_template("table.html", rows=rows)
+# 3. ---------------- USER LINK PRESS --------------
+def URL_usage(data):
+    if data:
+        rows  = finance.get_based_on_sector()
+    else:
+        rows = finance.get_all_data()
+
+    return render_template(rows = rows)
+    
+    
     
 @app.route("/search", methods=["GET"])
 def search():
@@ -65,12 +74,34 @@ def Url_link():
 @app.route("/holdings", methods=["GET"])
 def holdings():
     owner = (request.args.get("owner") or "").strip()
+    sector = (request.args.get("sector") or "").strip()
+    #---------- OWNER AND SECTOR ---------
+    if owner and sector:
+        data = finance.get_owner_based_values(owner)
+        values, labels = Xls_Reader.build_Series(data)
 
-    if owner:
+        if sector == labels[-1]:
+            top3 = labels[0:3]
+            rows = finance.get_sector_data(owner,top3)
+            data = finance.get_owner_based_values(owner)
+            values, labels = Xls_Reader.build_Series(data)
+            
+        else:
+            rows = finance.get_based_on_sector(owner,sector)
+            rows = finance.get_based_on_sector(owner, sector)
+            print("SECTOR STRING:", sector)
+
+            data = finance.get_owner_based_values(owner)
+            values, labels = Xls_Reader.build_Series(data)
+            
+
+    #-------- HERE ONLY OWNER BASED ---------
+    elif owner:
         rows = finance.get_owners(owner)
 
         data = finance.get_owner_based_values(owner)
         values, labels = Xls_Reader.build_Series(data)
+
     else:
         rows = finance.get_all_data()
         values, labels = None, None
@@ -82,6 +113,8 @@ def holdings():
         chart_values=values,
         chart_labels=labels
     )
+
+
 
 if __name__ == "__main__":
     # app.run(debug=True)

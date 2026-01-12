@@ -88,12 +88,10 @@ def holdings():
             
         else:
             rows = finance.get_based_on_sector(owner,sector)
-            rows = finance.get_based_on_sector(owner, sector)
-            print("SECTOR STRING:", sector)
-
             data = finance.get_owner_based_values(owner)
             values, labels = Xls_Reader.build_Series(data)
             
+
 
     #-------- HERE ONLY OWNER BASED ---------
     elif owner:

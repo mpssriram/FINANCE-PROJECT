@@ -85,7 +85,20 @@ class FinanceService:
 
 #---------- NEEDED FUNCTIONS ---------
     def search(self,data):
+
         conn = self._connect()
+        datass = data.upper()
+        datass = datass.split(" ")
+        remove_tag = ['LIMITED','LTD','BANK','BOND']
+        new_data = []
+        for i in range(len(datass)):
+            print(datass[i],type(datass))
+            if datass[i] in remove_tag:
+                pass
+            else:
+                new_data.append(datass[i])
+        data = " ".join(new_data)
+        
         try:
             cursor = conn.cursor(dictionary=True)
             columns = ["stock_name","ISIN",'sector_name','quantity','Average_cost_price','value_at_cost','current_market','crt_mkt_price_change','valuation',
@@ -94,7 +107,7 @@ class FinanceService:
                 'nearing_long_term_quantity',
                 "owner_name"]
             insert_columns = ",".join(columns)
-            sql = f"""select {insert_columns} from {self.table} where stock_name like %s 
+            sql = f"""select {insert_columns} from {self.table} where stock_name like %s
             """
             cursor.execute(sql,(f"%{data}%",))
             return cursor.fetchall()
@@ -120,6 +133,7 @@ class FinanceService:
                 'nearing_long_term_quantity',
                 "owner_name","unique_code"]
             insert_columns = ",".join(columns)
+            
             sql = f"""select {insert_columns} from {self.table} 
             """
             cursor.execute(sql)
@@ -176,6 +190,7 @@ class FinanceService:
             conn.close()
     def get_sector_data(self,owner,sector):
         conn = self._connect()
+        print("-------",sector)
         try:
             cursor = conn.cursor(dictionary = True)
             columns = ["stock_name","ISIN",'sector_name','quantity','Average_cost_price','value_at_cost','current_market','crt_mkt_price_change','valuation',
@@ -184,7 +199,9 @@ class FinanceService:
                 'nearing_long_term_quantity',
                 "owner_name","unique_code"]
             insert_columns = ",".join(columns)
+            print("-------",sector)
             placeholders = ",".join(["%s"] * len(sector))
+            print("------=->",placeholders)
             sql = f"""select {insert_columns} from {self.table} where owner_name = %s and sector_name NOT IN ({placeholders})
             """
             params = (owner, *sector)
@@ -201,3 +218,5 @@ if __name__ == "__main__":
     b = builder.read_file("Phani_Equity_Summary_Details.xls")
     data = a.insert_dataframe(b)
     a.get_all_data()
+    print(a.search("bankhdfc"))
+    

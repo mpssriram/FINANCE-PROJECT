@@ -15,6 +15,11 @@ class FinanceService:
         self.password = self.config._get("database.password", "1234")  
         self.database = self.config._get("database.database", "finance_project")
         self.table = self.config._get("database.table", "finances")
+        self.columns =["stock_name","ISIN",'sector_name','quantity','Average_cost_price','value_at_cost','current_market','crt_mkt_price_change','valuation',
+                'unrealised_profit_loss',
+                'realised_profit_loss',
+                'nearing_long_term_quantity',
+                "owner_name"]
 
     # -------------------------
     # Internal: connection helper
@@ -81,32 +86,27 @@ class FinanceService:
             return cursor.rowcount
         finally:
             conn.close()
-
-
 #---------- NEEDED FUNCTIONS ---------
     def search(self,data):
-
         conn = self._connect()
-        datass = data.upper()
-        datass = datass.split(" ")
-        remove_tag = ['LIMITED','LTD','BANK','BOND']
-        new_data = []
-        for i in range(len(datass)):
-            print(datass[i],type(datass))
-            if datass[i] in remove_tag:
-                pass
+        datass1 = []
+        datass1.append(data)
+        # ----- HERE WE CAN SEARCH INPUTS LIKE (BANK HDFC) WITHOUT HAVING ANY ISSUES ---------
+        if len(datass1) != 1:
+            datass = data.upper()
+            datass = set(datass.split(" "))
+            remove_tag = set(['LIMITED','LTD','BANK','BOND'])
+            matches = remove_tag & datass
+            if matches:
+                datass = datass.difference(matches)
             else:
-                new_data.append(datass[i])
-        data = " ".join(new_data)
-        
+                pass
+            data = ','.join(list(datass))
+        else:
+            pass
         try:
             cursor = conn.cursor(dictionary=True)
-            columns = ["stock_name","ISIN",'sector_name','quantity','Average_cost_price','value_at_cost','current_market','crt_mkt_price_change','valuation',
-                'unrealised_profit_loss',
-                'realised_profit_loss',
-                'nearing_long_term_quantity',
-                "owner_name"]
-            insert_columns = ",".join(columns)
+            insert_columns = ",".join(self.columns)
             sql = f"""select {insert_columns} from {self.table} where stock_name like %s
             """
             cursor.execute(sql,(f"%{data}%",))
@@ -118,21 +118,7 @@ class FinanceService:
         conn = self._connect()
         try:
             cursor = conn.cursor(dictionary=True)
-            cursor.execute("SELECT DATABASE() AS db")
-            print("APP DB:", cursor.fetchone())
-
-            cursor.execute("SELECT @@hostname AS host, @@port AS port, USER() AS user")
-            print("APP CONN:", cursor.fetchone())
-
-            cursor.execute(f"SELECT COUNT(*) AS cnt FROM {self.table}")
-            print("APP TABLE COUNT:", cursor.fetchone())
-
-            columns = ["stock_name","ISIN",'sector_name','quantity','Average_cost_price','value_at_cost','current_market','crt_mkt_price_change','valuation',
-                'unrealised_profit_loss',
-                'realised_profit_loss',
-                'nearing_long_term_quantity',
-                "owner_name","unique_code"]
-            insert_columns = ",".join(columns)
+            insert_columns = ",".join(self.columns)
             
             sql = f"""select {insert_columns} from {self.table} 
             """
@@ -157,14 +143,8 @@ class FinanceService:
         conn = self._connect()
         try:
             cursor = conn.cursor(dictionary = True)
-            columns = ["stock_name","ISIN",'sector_name','quantity','Average_cost_price','value_at_cost','current_market','crt_mkt_price_change','valuation',
-                'unrealised_profit_loss',
-                'realised_profit_loss',
-                'nearing_long_term_quantity',
-                "owner_name","unique_code"]
-            insert_columns = ",".join(columns)
-            sql = f"""select {insert_columns} from {self.table} where owner_name = %s
-            """
+            insert_columns = ",".join(self.columns)
+            sql = f"""select {insert_columns} from {self.table} where owner_name = %s"""
             cursor.execute(sql,(datas,))
             rows = cursor.fetchall()
             return rows
@@ -175,33 +155,20 @@ class FinanceService:
         conn = self._connect()
         try:
             cursor = conn.cursor(dictionary = True)
-            columns = ["stock_name","ISIN",'sector_name','quantity','Average_cost_price','value_at_cost','current_market','crt_mkt_price_change','valuation',
-                'unrealised_profit_loss',
-                'realised_profit_loss',
-                'nearing_long_term_quantity',
-                "owner_name","unique_code"]
-            insert_columns = ",".join(columns)
-            sql = f"""select {insert_columns} from {self.table} where owner_name = %s and sector_name like %s
-            """
+            insert_columns = ",".join(self.columns)
+            sql = f"""select {insert_columns} from {self.table} where owner_name = %s and sector_name like %s"""
             cursor.execute(sql,(owner,f"%{sector}%"))
             rows = cursor.fetchall()
             return rows
         finally:
             conn.close()
+#----- IF PRESSED ON OTHERS DIFFERENT FUNCTION -------------
     def get_sector_data(self,owner,sector):
         conn = self._connect()
-        print("-------",sector)
         try:
             cursor = conn.cursor(dictionary = True)
-            columns = ["stock_name","ISIN",'sector_name','quantity','Average_cost_price','value_at_cost','current_market','crt_mkt_price_change','valuation',
-                'unrealised_profit_loss',
-                'realised_profit_loss',
-                'nearing_long_term_quantity',
-                "owner_name","unique_code"]
-            insert_columns = ",".join(columns)
-            print("-------",sector)
+            insert_columns = ",".join(self.columns)
             placeholders = ",".join(["%s"] * len(sector))
-            print("------=->",placeholders)
             sql = f"""select {insert_columns} from {self.table} where owner_name = %s and sector_name NOT IN ({placeholders})
             """
             params = (owner, *sector)

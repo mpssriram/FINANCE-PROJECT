@@ -9,21 +9,17 @@ import mysql.connector
 # --------------------
 cfg = Config("config.yaml")
 app = Flask(__name__)
-
-
 finance = FinanceService(cfg)
 Xls_Reader = XlsReader(cfg)
-
+#-=---------------------------------
 @app.route("/", methods=["GET"])
 def index():
     return render_template("index.html")
-
 #-------- APIs FOR THE PROGRAM --------------
 # 1. --------- FOR SEARCH BAR ----------
 def search_bar(tags):
     if not tags:
         rows = finance.get_all_data()
-        print("ALL ROWS COUNT:", len(rows))
     else:
         rows = finance.search(data = tags)
     
@@ -34,20 +30,13 @@ def URL_Link(data):
     if not data:
         return "file not found not provided",400
     p = Path(data)
-
-
     if not p.exists() or not p.is_file():
         return "File not found on system", 400
-    
     try:
         input_user = Xls_Reader.read_file(str(p))
-        print("sucess")
         finance.insert_dataframe(input_user)
-        print("sucess2")  # UNIQUE key may trigger IntegrityError
     except mysql.connector.IntegrityError:
-        # ✅ data already exists because UNIQUE key hit
         pass
-
     rows = finance.get_all_data()
     return render_template("table.html", rows=rows)
 # 3. ---------------- USER LINK PRESS --------------
@@ -58,9 +47,7 @@ def URL_usage(data):
         rows = finance.get_all_data()
 
     return render_template(rows = rows)
-    
-    
-    
+#-------------------------------------------- 
 @app.route("/search", methods=["GET"])
 def search():
     tags = (request.args.get("tags") or "").strip()
@@ -76,44 +63,26 @@ def holdings():
     owner = (request.args.get("owner") or "").strip()
     sector = (request.args.get("sector") or "").strip()
     #---------- OWNER AND SECTOR ---------
+    data = finance.get_owner_based_values(owner)
+    values, labels = Xls_Reader.build_Series(data)
     if owner and sector:
-        data = finance.get_owner_based_values(owner)
-        values, labels = Xls_Reader.build_Series(data)
-
         if sector == labels[-1]:
             top3 = labels[0:3]
-            rows = finance.get_sector_data(owner,top3)
-            data = finance.get_owner_based_values(owner)
-            values, labels = Xls_Reader.build_Series(data)
-            
+            rows = finance.get_sector_data(owner,top3) 
         else:
             rows = finance.get_based_on_sector(owner,sector)
-            data = finance.get_owner_based_values(owner)
-            values, labels = Xls_Reader.build_Series(data)
-            
-
-
     #-------- HERE ONLY OWNER BASED ---------
     elif owner:
         rows = finance.get_owners(owner)
-
-        data = finance.get_owner_based_values(owner)
-        values, labels = Xls_Reader.build_Series(data)
-
     else:
         rows = finance.get_all_data()
         values, labels = None, None
-
     return render_template(
         "table.html",
         rows=rows,
         selected_owner=owner,
         chart_values=values,
-        chart_labels=labels
-    )
-
-
-
+        chart_labels=labels)
 if __name__ == "__main__":
     # app.run(debug=True)
     app.run(host="0.0.0.0", port=5000, debug=True)

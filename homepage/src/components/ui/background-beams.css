@@ -1,0 +1,169 @@
+.background-beams {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.background-beams__layer,
+.background-beams__beam {
+  position: absolute;
+  inset: auto;
+}
+
+.background-beams__layer {
+  inset: 0;
+}
+
+.background-beams__glow {
+  position: absolute;
+  width: 42rem;
+  height: 42rem;
+  border-radius: 50%;
+  filter: blur(64px);
+  opacity: 0.32;
+}
+
+.background-beams__glow--left {
+  top: -10rem;
+  left: -8rem;
+  background: radial-gradient(circle, rgba(205, 28, 24, 0.3), transparent 68%);
+}
+
+.background-beams__glow--right {
+  top: 3rem;
+  right: -10rem;
+  background: radial-gradient(circle, rgba(255, 168, 150, 0.22), transparent 66%);
+}
+
+.background-beams__glow--bottom {
+  bottom: -18rem;
+  left: 50%;
+  width: 54rem;
+  height: 30rem;
+  transform: translateX(-50%);
+  background: radial-gradient(circle, rgba(155, 19, 19, 0.24), transparent 70%);
+}
+
+.background-beams__beam {
+  top: -18%;
+  width: 18rem;
+  height: 135%;
+  opacity: 0.52;
+  transform: rotate(var(--beam-rotation, -18deg)) translate3d(0, 0, 0);
+  transform-origin: top center;
+  mix-blend-mode: screen;
+  will-change: transform, opacity;
+}
+
+.background-beams__beam::before,
+.background-beams__beam::after {
+  position: absolute;
+  content: "";
+}
+
+.background-beams__beam::before {
+  inset: 0;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 168, 150, 0) 0%,
+    rgba(255, 168, 150, 0.08) 12%,
+    rgba(255, 168, 150, 0.72) 45%,
+    rgba(205, 28, 24, 0.82) 72%,
+    rgba(56, 0, 10, 0) 100%
+  );
+  clip-path: polygon(45% 0%, 55% 0%, 92% 100%, 8% 100%);
+  filter: blur(1px);
+}
+
+.background-beams__beam::after {
+  top: 11%;
+  bottom: 16%;
+  left: 49.25%;
+  width: 1px;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 245, 242, 0),
+    rgba(255, 245, 242, 0.78) 30%,
+    rgba(255, 168, 150, 0.1) 100%
+  );
+  box-shadow:
+    0 0 1.2rem rgba(255, 168, 150, 0.5),
+    0 0 2.4rem rgba(205, 28, 24, 0.28);
+}
+
+.background-beams__beam--soft::before {
+  background: linear-gradient(
+    180deg,
+    rgba(255, 168, 150, 0) 0%,
+    rgba(255, 168, 150, 0.04) 12%,
+    rgba(255, 168, 150, 0.4) 44%,
+    rgba(155, 19, 19, 0.42) 78%,
+    rgba(56, 0, 10, 0) 100%
+  );
+}
+
+.background-beams__beam--soft::after {
+  opacity: 0.58;
+}
+
+.background-beams__beam--pulse {
+  animation:
+    background-beams-drift var(--beam-duration, 16s) ease-in-out infinite,
+    background-beams-pulse 6.8s ease-in-out infinite;
+  animation-delay: var(--beam-delay, 0s);
+}
+
+.background-beams__beam--slow {
+  animation:
+    background-beams-drift calc(var(--beam-duration, 16s) + 7s) ease-in-out infinite,
+    background-beams-pulse 9s ease-in-out infinite;
+  animation-delay: var(--beam-delay, 0s);
+}
+
+.background-beams__beam--still {
+  opacity: 0.38;
+}
+
+@keyframes background-beams-drift {
+  0%,
+  100% {
+    transform: rotate(var(--beam-rotation, -18deg)) translate3d(0, 0, 0) scaleY(1);
+  }
+
+  50% {
+    transform:
+      rotate(calc(var(--beam-rotation, -18deg) + var(--beam-sway, 4deg)))
+      translate3d(var(--beam-shift-x, 1.2rem), 1rem, 0)
+      scaleY(1.04);
+  }
+}
+
+@keyframes background-beams-pulse {
+  0%,
+  100% {
+    opacity: 0.36;
+  }
+
+  50% {
+    opacity: 0.7;
+  }
+}
+
+@media (max-width: 780px) {
+  .background-beams__beam {
+    width: 12rem;
+    opacity: 0.44;
+  }
+
+  .background-beams__glow {
+    filter: blur(48px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .background-beams__beam--pulse,
+  .background-beams__beam--slow {
+    animation: none;
+  }
+}
